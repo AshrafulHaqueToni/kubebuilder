@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- ash.dev_v1_ash.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples

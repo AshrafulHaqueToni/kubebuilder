@@ -1,0 +1,20 @@
+apiVersion: ash.dev.ash.dev/v1
+kind: Ash
+metadata:
+  labels:
+    app.kubernetes.io/name: ash
+    app.kubernetes.io/instance: ash-sample
+    app.kubernetes.io/part-of: kubebuilder
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: kubebuilder
+  name: ash-sample-3
+spec:
+  deploymentName:
+  replicas: 5
+  container:
+    image: ashraf10039/httpapiserver
+    port: 8081
+  service:
+    serviceName: "my-bro"
+    serviceType: "ClusterIP"
+    servicePort: 8081
