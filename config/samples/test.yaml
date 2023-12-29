@@ -1,16 +1,11 @@
 apiVersion: ash.dev.ash.dev/v1
 kind: Ash
 metadata:
-  labels:
-    app.kubernetes.io/name: ash
-    app.kubernetes.io/instance: ash-sample
-    app.kubernetes.io/part-of: kubebuilder
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: kubebuilder
-  name: ash-sample-3
+  name: test
+  namespace: demo
 spec:
   deploymentName:
-  replicas: 5
+  replicas: 3
   container:
     image: ashraf10039/httpapiserver
     port: 8081
