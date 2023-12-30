@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -77,13 +78,13 @@ func (r *AshReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	var ash ashappsv1.Ash
 
 	if err := r.Get(ctx, req.NamespacedName, &ash); err != nil {
-		fmt.Println(err, "unable to fetch ash")
+		klog.Info(err, "unable to fetch ash")
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.
 		return ctrl.Result{}, nil
 	}
-	fmt.Println("Name:", ash.Name)
+	klog.Info("Name:", ash.Name)
 
 	// deploymentObject carry the all data of deployment in specific namespace and name
 	var deploymentObject appsv1.Deployment
@@ -108,28 +109,28 @@ func (r *AshReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	if err := r.Get(ctx, objectkey, &deploymentObject); err != nil {
 		if errors.IsNotFound(err) {
-			fmt.Println("Couldn't find existing Deployment for", ash.Name, " creating one ...")
+			klog.Info("Couldn't find existing Deployment for", ash.Name, " creating one ...")
 			err := r.Client.Create(ctx, newDeployment(&ash, deploymentName))
 			if err != nil {
-				fmt.Println("error while creating deployment %s", err)
+				klog.Info("error while creating deployment %s", err)
 				return ctrl.Result{}, err
 			} else {
-				fmt.Println("%s Deployment Created ", ash.Name)
+				klog.Info("%s Deployment Created ", ash.Name)
 			}
 		} else {
-			fmt.Println("error fetching deployment %s", err)
+			klog.Info("error fetching deployment %s", err)
 			return ctrl.Result{}, err
 		}
 	} else {
 		if ash.Spec.Replicas != nil && *ash.Spec.Replicas != *deploymentObject.Spec.Replicas {
-			fmt.Println(*ash.Spec.Replicas, *deploymentObject.Spec.Replicas)
-			fmt.Println("Deployment replica don't match ... updating")
+			klog.Info(*ash.Spec.Replicas, *deploymentObject.Spec.Replicas)
+			klog.Info("Deployment replica don't match ... updating")
 			// As the replica count didn't match the, we need to update it
 			deploymentObject.Spec.Replicas = ash.Spec.Replicas
 			if err := r.Update(ctx, &deploymentObject); err != nil {
-				fmt.Println("error updating deployment %s", err)
+				klog.Info("error updating deployment %s", err)
 			}
-			fmt.Println("deployment updated")
+			klog.Info("deployment updated")
 		}
 	}
 
@@ -150,13 +151,13 @@ func (r *AshReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	// create or update service
 	if err := r.Get(ctx, objectkey, &serviceObject); err != nil {
 		if errors.IsNotFound(err) {
-			fmt.Println("Could not find existing Service for", ash.Name, "creating one ...")
+			klog.Info("Could not find existing Service for", ash.Name, "creating one ...")
 			err := r.Create(ctx, newService(&ash, serviceName))
 			if err != nil {
-				fmt.Println("error while creating service %s", err)
+				klog.Info("error while creating service %s", err)
 				return ctrl.Result{}, err
 			} else {
-				fmt.Println("%s Service Created ", ash.Name)
+				klog.Info("%s Service Created ", ash.Name)
 			}
 		} else {
 			fmt.Printf("error fetching service %s", err)
@@ -164,19 +165,19 @@ func (r *AshReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		}
 	} else {
 		if ash.Spec.Replicas != nil && *ash.Spec.Replicas != ash.Status.AvailableReplicas {
-			fmt.Println("Is this problem ?")
-			fmt.Println("Service replica miss match .... updating ")
+			klog.Info("Is this problem ?")
+			klog.Info("Service replica miss match .... updating ")
 			ash.Status.AvailableReplicas = *ash.Spec.Replicas
 
 			if err := r.Status().Update(ctx, &ash); err != nil {
-				fmt.Errorf("error while updating service %s", err)
+				klog.Info("error while updating service %s", err)
 				return ctrl.Result{}, err
 			}
-			fmt.Println("service updated")
+			klog.Info("service updated")
 
 		}
 	}
-	fmt.Println("reconcile done")
+	klog.Info("reconcile done")
 
 	return ctrl.Result{
 		Requeue:      true,
